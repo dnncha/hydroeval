@@ -17,6 +17,23 @@
 import numpy as np
 
 
+def _average_ranks(values):
+    """Return ranks with tied values assigned their average rank."""
+    values = np.asarray(values)
+    values_2d = values.reshape((-1, 1)) if values.ndim == 1 else values
+    ranks = np.empty(values_2d.shape, dtype=np.float64)
+
+    for column in range(values_2d.shape[1]):
+        _, inverse, counts = np.unique(
+            values_2d[:, column], return_inverse=True, return_counts=True
+        )
+        starts = np.cumsum(counts) - counts
+        average_ranks = starts + 0.5 * (counts - 1)
+        ranks[:, column] = average_ranks[inverse]
+
+    return ranks[:, 0] if values.ndim == 1 else ranks
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # OBJECTIVE FUNCTIONS
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,8 +191,8 @@ def kgenp(simulations, evaluation):
     """
     # calculate error in timing and dynamics r
     # (Spearman's correlation coefficient)
-    sim_rank = np.argsort(np.argsort(simulations, axis=0), axis=0)
-    obs_rank = np.argsort(np.argsort(evaluation, axis=0), axis=0)
+    sim_rank = _average_ranks(simulations)
+    obs_rank = _average_ranks(evaluation)
 
     r_num = np.sum((obs_rank - np.mean(obs_rank, axis=0, dtype=np.float64))
                    * (sim_rank - np.mean(sim_rank, axis=0, dtype=np.float64)),
