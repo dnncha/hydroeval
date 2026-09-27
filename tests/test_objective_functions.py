@@ -62,6 +62,17 @@ class TestObjectiveFunctions(unittest.TestCase):
                     self.expected[obj_fn]
                 )
 
+    def test_kgenp_uses_average_ranks_for_ties(self):
+        obs = numpy.array([0., 0., 0., 1., 2.])
+        sim = numpy.array([0., 0., 1., 0., 2.])
+        permutation = numpy.array([4, 1, 0, 3, 2])
+
+        expected = numpy.array([[0.5], [0.5], [1.], [1.]])
+        numpy.testing.assert_allclose(hydroeval.kgenp(sim, obs), expected)
+        numpy.testing.assert_allclose(
+            hydroeval.kgenp(sim[permutation], obs[permutation]), expected
+        )
+
 
 if __name__ == '__main__':
     test_loader = unittest.TestLoader()
